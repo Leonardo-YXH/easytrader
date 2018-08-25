@@ -14,6 +14,7 @@ from .config import client
 if not sys.platform.startswith("darwin"):
     import pywinauto
     import pywinauto.clipboard
+    from pywinauto import keyboard
 
 
 class IClientTrader(abc.ABC):
@@ -49,6 +50,7 @@ class IClientTrader(abc.ABC):
 class ClientTrader(IClientTrader):
     # The strategy to use for getting grid data
     grid_strategy: Type[grid_strategies.IGridStrategy] = grid_strategies.Copy
+    # grid_strategy: Type[grid_strategies.IGridStrategy] = grid_strategies.Xls #同花顺客户端的ctrl+c是撤销卖出委托
 
     def __init__(self):
         self._config = client.create(self.broker_type)
@@ -99,7 +101,7 @@ class ClientTrader(IClientTrader):
         result = {}
         for key, control_id in self._config.BALANCE_CONTROL_ID_GROUP.items():
             result[key] = float(
-                self._main.window(
+                self._main.child_window(
                     control_id=control_id, class_name="Static"
                 ).window_text()
             )
@@ -140,6 +142,39 @@ class ClientTrader(IClientTrader):
                 self._cancel_entrust_by_double_click(i)
                 return self._handle_pop_dialogs()
         return {"message": "委托单状态错误不能撤单, 该委托单可能已经成交或者已撤"}
+
+    def cancel_all_entrust(self):
+        self._switch_left_menus(["撤单[F3]"])
+        grid=self._main.child_window(
+            control_id=self._config.COMMON_GRID_CONTROL_ID, class_name="CVirtualGridCtrl"
+        )
+        grid.set_focus()
+        grid.type_keys('^Z')
+
+        if self._is_exist_pop_dialog():
+            return self._handle_pop_dialogs()
+
+    def cancel_all_sell_entrust(self):
+        self._switch_left_menus(["撤单[F3]"])
+        grid=self._main.child_window(
+            control_id=self._config.COMMON_GRID_CONTROL_ID, class_name="CVirtualGridCtrl"
+        )
+        grid.set_focus()
+        grid.type_keys('^C')
+
+        if self._is_exist_pop_dialog():
+            return self._handle_pop_dialogs()
+
+    def cancel_all_buy_entrust(self):
+        self._switch_left_menus(["撤单[F3]"])
+        grid=self._main.child_window(
+            control_id=self._config.COMMON_GRID_CONTROL_ID, class_name="CVirtualGridCtrl"
+        )
+        grid.set_focus()
+        grid.type_keys('^X')
+
+        if self._is_exist_pop_dialog():
+            return self._handle_pop_dialogs()
 
     def buy(self, security, price, amount, **kwargs):
         self._switch_left_menus(["买入[F1]"])
@@ -332,6 +367,7 @@ class ClientTrader(IClientTrader):
     def _get_grid_data(self, control_id):
         return self.grid_strategy(self).get(control_id)
 
+    #买入卖出的输入
     def _type_keys(self, control_id, text):
         self._main.window(
             control_id=control_id, class_name="Edit"

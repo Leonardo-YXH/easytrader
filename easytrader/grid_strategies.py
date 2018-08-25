@@ -39,7 +39,7 @@ class BaseStrategy(IGridStrategy):
         pass
 
     def _get_grid(self, control_id: int):
-        grid = self._trader.main.window(
+        grid = self._trader.main.child_window(
             control_id=control_id, class_name="CVirtualGridCtrl"
         )
         return grid
@@ -52,7 +52,9 @@ class Copy(BaseStrategy):
 
     def get(self, control_id: int) -> List[Dict]:
         grid = self._get_grid(control_id)
-        grid.type_keys("^A^C")
+        # grid.type_keys("^A^C") #一些同花顺客户端不允许直接复制，并且ctrl+C是撤销卖出委托快捷键，这里改成先右击弹出复制选项后按C键
+        grid.set_focus().right_click()
+        grid.type_keys('c')
         content = self._get_clipboard_data()
         return self._format_grid_data(content)
 
@@ -97,7 +99,8 @@ class Xls(BaseStrategy):
         self._trader.app.top_window().type_keys("%{s}%{y}")
         # Wait until file save complete otherwise pandas can not find file
         self._trader.wait(0.2)
-        return self._format_grid_data(temp_path)
+        abs_temp_path=r'C://Users/'+temp_path
+        return self._format_grid_data(abs_temp_path)
 
     def _format_grid_data(self, data: str) -> List[Dict]:
         df = pd.read_csv(

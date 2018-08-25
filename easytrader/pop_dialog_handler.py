@@ -15,11 +15,11 @@ class PopDialogHandler:
             self._submit_by_shortcut()
             return None
 
+
         if "提示" in title:
             content = self._extract_content()
             self._submit_by_click()
             return {"message": content}
-
         content = self._extract_content()
         self._close()
         return {"message": "unknown message: {}".format(content)}
@@ -68,5 +68,6 @@ class TradePopDialogHandler(PopDialogHandler):
             self._submit_by_click()
             time.sleep(0.05)
             raise exceptions.TradeError(content)
-        self._close()
+        # self._close() #不关闭程序 edited by leonardo
         return None
+
