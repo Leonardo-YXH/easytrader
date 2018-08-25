@@ -253,6 +253,40 @@ class ClientTrader(IClientTrader):
         else:
             raise TypeError("不支持对应的市价类型: {}".format(ttype))
 
+    def _set_select_type(self, ttype,control_id):
+        """
+        选择对应的下拉选项
+        :param ttype: 需要切换的项
+        :param control_id: 控件ID
+        :return:
+        """
+        selects = self._main(
+            control_id=control_id,
+            class_name="ComboBox",
+        )
+        for i, text in selects.texts():
+            # skip 0 index, because 0 index is current select index
+            if i == 0:
+                continue
+            if ttype in text:
+                selects.select(i - 1)
+                break
+        else:
+            raise TypeError("不支持对应的市价类型: {}".format(ttype))
+    def switch_trade_account(self, account_type,account_no):
+        """
+        切换账户
+        :param account_type: 账户类型[深圳A股,上海A股]
+        :param account_no:账号
+        :return:
+        """
+        try:
+            self._set_select_type(account_type,self._config.TRADE_ACCOUNT_TYPE_CONTROL_ID)
+            self._set_select_type(account_no, self._config.TRADE_ACCOUNT_NO_CONTROL_ID)
+        except TypeError as e:
+            return e
+
+
     def auto_ipo(self):
         self._switch_left_menus(self._config.AUTO_IPO_MENU_PATH)
 
