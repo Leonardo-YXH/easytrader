@@ -7,6 +7,7 @@ import time
 from typing import Type
 
 import easyutils
+from . import exceptions
 
 from . import grid_strategies, helpers, pop_dialog_handler
 from .config import client
@@ -416,8 +417,10 @@ class ClientTrader(IClientTrader):
 
         while self._is_exist_pop_dialog():
             title = self._get_pop_dialog_title()
-
-            result = handler.handle(title)
+            try:
+                result = handler.handle(title)
+            except exceptions.TradeError as e:
+                print(e)
             if result:
                 return result
         return {"message": "success"}

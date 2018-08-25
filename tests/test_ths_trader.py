@@ -17,7 +17,7 @@ if __name__=='__main__':
     msg=input("please input your choice:")
     while True:
         if msg=='1':
-            client.buy('603776',25.12,100)
+            client.buy('603776',25.122,100)
         elif msg=='2':
             client.sell('603776',25.13,amount=100)
         elif msg=='3':
