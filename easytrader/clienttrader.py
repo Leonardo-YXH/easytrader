@@ -223,8 +223,8 @@ class ClientTrader(IClientTrader):
         :param security: 六位证券代码
         :param amount: 交易数量
         :param ttype: 市价委托类型，默认客户端默认选择，
-                     深市可选 ['对手方最优价格', '本方最优价格', '即时成交剩余撤销', '最优五档即时成交剩余 '全额成交或撤销']
-                     沪市可选 ['最优五档成交剩余撤销', '最优五档成交剩余转限价']
+                     深市可选  ['1-对手方最优价格申报', '2-本方最优价格申报', '3-即时成交剩余撤销申报', '4-最优五档即时成交剩余撤销申报', '5-全额成交或撤销申报']
+                     沪市可选 ['1-最优五档即时成交剩余撤销申报', '2-最优五档即时成交剩余转限价申报']
 
         :return: {'entrust_no': '委托单号'}
         """
@@ -239,40 +239,34 @@ class ClientTrader(IClientTrader):
 
     def _set_market_trade_type(self, ttype):
         """根据选择的市价交易类型选择对应的下拉选项"""
-        selects = self._main(
+        selects = self._main.child_window(
             control_id=self._config.TRADE_MARKET_TYPE_CONTROL_ID,
             class_name="ComboBox",
         )
-        for i, text in selects.texts():
-            # skip 0 index, because 0 index is current select index
-            if i == 0:
-                continue
+        for text in selects.texts():
             if ttype in text:
-                selects.select(i - 1)
-                break
-        else:
-            raise TypeError("不支持对应的市价类型: {}".format(ttype))
+                selects.select(ttype)
+                return
+
+        raise TypeError("不支持对应的市价类型: {}".format(ttype))
 
     def _set_select_type(self, ttype,control_id):
         """
         选择对应的下拉选项
-        :param ttype: 需要切换的项
+        :param ttype: 需要切换的项['上海Ａ股', '上海Ａ股', '深圳Ａ股']
         :param control_id: 控件ID
         :return:
         """
-        selects = self._main(
+        selects = self._main.child_window(
             control_id=control_id,
             class_name="ComboBox",
         )
-        for i, text in selects.texts():
-            # skip 0 index, because 0 index is current select index
-            if i == 0:
-                continue
-            if ttype in text:
-                selects.select(i - 1)
+        for text in selects.texts():
+            if ttype == text:
+                selects.select(text)
                 break
         else:
-            raise TypeError("不支持对应的市价类型: {}".format(ttype))
+            raise TypeError("不支持对应的账户类型: {}".format(ttype))
     def switch_trade_account(self, account_type,account_no):
         """
         切换账户

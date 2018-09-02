@@ -18,6 +18,8 @@ if __name__=='__main__':
     while True:
         if msg=='1':
             client.buy('603776',25.122,100)
+        elif msg == '1.1':
+            client.market_buy('002113', amount=100,ttype=u'2-最优五档即时成交剩余转限价申报')
         elif msg=='2':
             client.sell('603776',25.13,amount=100)
         elif msg=='3':
@@ -38,6 +40,10 @@ if __name__=='__main__':
             print(client.today_trades)
         elif msg=='6':
             print(client.today_entrusts)
+        elif msg=='7':
+            # account_type=input("account type:")
+            # account_no=input('account no:')
+            print(client.switch_trade_account(u'上海Ａ股',u'A446850006'))
         else:
             break
         print(help_msg)
