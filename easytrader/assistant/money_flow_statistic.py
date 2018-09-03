@@ -3,6 +3,7 @@ import tushare as ts
 from apscheduler.schedulers.blocking import BlockingScheduler
 from datetime import date, timedelta
 import matplotlib.pyplot as plt
+from . import k_bar_util
 
 
 class eagle_eye_bot(object):
@@ -214,13 +215,67 @@ class money_flow_level(object):
         self.volume += volume
 
 class monkey_seller(object):
-    def __init__(self,code):
+    def __init__(self,code,buy_price,volume,stop_loss=0.03,moving_stop_loss=0.015):
         self._code=code
+        self._buy_price=buy_price
+        self._volume=volume
+        self._stop_loss=1-stop_loss
+        self._moving_stop_loss=moving_stop_loss
+
         self._high=0
+        self._current_price=buy_price
+        self._k_bar=k_bar_util.K_Bar(time_step=2)
 
-    def check(self,tick_data):
+        if code.startswith('60'):#以60开头的为沪市
+            self._code_symbol=self._code+'.SH'
+        else:#以000开头的为深市
+            self._code_symbol = self._code + '.SZ'
 
-        return True
+    def update_yestoday_data(self):
+        """更新昨日数据，必须在每日开盘时执行一遍"""
+        pro=ts.pro_api()
+        yestoday=date.today()-timedelta(days=1)
+        yestoday=yestoday.strftime('%Y-%M-%d')
+        self._yestoday_low=pro.daily(ts_code=self._code_symbol,start_date=yestoday,end_date=yestoday).loc[0,'low']
+
+    def check_sell(self,tick_data):
+        """
+        是否符合卖出条件
+        :param tick_data:
+        :return:
+        """
+        self._current_price=float(tick_data['price'])
+        self._k_bar.add_tick(tick_data)
+        if self._strategy_1():
+            return True
+        if self._strategy_2():
+            return True
+
+        return False
+
+    def _strategy_1(self):
+        """
+        低于止损价直接卖出
+        :return:
+        """
+        if self._current_price/self._buy_price<self._stop_loss:
+            return True
+    def _strategy_2(self):
+        """突破昨日最低价直接卖出"""
+        if self._current_price<self._yestoday_low:
+            return True
+
+    def _strategy_3(self,tick_data):
+        high_=float(tick_data['high'])
+        if self._high<high_:
+            self._high=high_
+        pre_close=float(tick_data['pre_close'])
+        income_point= self._high/pre_close-1
+        if income_point>0.03:
+            if self._current_price<(pre_close+self._high)/2:
+                return True
+
+        return False
 
 
 def fit_levels(levels=[20000, 100000, 300000, 1000000]):
