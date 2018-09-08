@@ -1,9 +1,11 @@
 # -*- coding:utf-8 -*-
+import math
 import tushare as ts
 from apscheduler.schedulers.blocking import BlockingScheduler
 from datetime import date, timedelta
 import matplotlib.pyplot as plt
-from . import k_bar_util
+from easytrader.assistant import k_bar_util,market_trader_util
+
 
 
 class eagle_eye_bot(object):
@@ -215,6 +217,9 @@ class money_flow_level(object):
         self.volume += volume
 
 class monkey_seller(object):
+    """
+    排除几类stock不作考虑：[ST,从当前日期往前停牌超过10天]
+    """
     def __init__(self,code,buy_price,volume,stop_loss=0.03,moving_stop_loss=0.015):
         self._code=code
         self._buy_price=buy_price
@@ -225,18 +230,33 @@ class monkey_seller(object):
         self._high=0
         self._current_price=buy_price
         self._k_bar=k_bar_util.K_Bar(time_step=2)
+        self._is_limit_up=False #是否涨停
+        self._limit_up_price=0
+        self._pre_bar=None
 
         if code.startswith('60'):#以60开头的为沪市
             self._code_symbol=self._code+'.SH'
         else:#以000开头的为深市
             self._code_symbol = self._code + '.SZ'
 
-    def update_yestoday_data(self):
-        """更新昨日数据，必须在每日开盘时执行一遍"""
+    def init_previous_data(self):
+        """初始化上一个交易日数据（且不是停牌数据），必须在每日开盘时执行一遍,如果超过10天都没数据则置空（除非ST或者特殊情况比如中兴贸易战，否则停牌一般不会超过10天）"""
         pro=ts.pro_api()
-        yestoday=date.today()-timedelta(days=1)
-        yestoday=yestoday.strftime('%Y-%M-%d')
-        self._yestoday_low=pro.daily(ts_code=self._code_symbol,start_date=yestoday,end_date=yestoday).loc[0,'low']
+        previous_trade_day=date.today()-timedelta(days=10)
+        previous_trade_day=previous_trade_day.strftime('%Y%m%d')
+        data=pro.daily(ts_code=self._code_symbol,start_date=previous_trade_day,end_date=date.today().strftime('%Y%m%d'))
+        for _,item in data.iterrows():
+            if item['vol']!=0:
+                self._pre_bar=item
+                break
+            else:
+                continue
+
+        self._limit_up_price=market_trader_util.calculate_limit_up(float(ts.get_realtime_quotes(self._code).loc[0,'pre_close']))
+
+    def update_today_data_as_pre_data(self):
+        """每天收盘后更新数据作为明天的历史K数据"""
+        pass
 
     def check_sell(self,tick_data):
         """
@@ -245,30 +265,31 @@ class monkey_seller(object):
         :return:
         """
         self._current_price=float(tick_data['price'])
+        if self._high < self._current_price:
+            self._high = self._current_price
         self._k_bar.add_tick(tick_data)
-        if self._strategy_1():
+
+        if self._strategy_stop_loss():
             return True
-        if self._strategy_2():
+        if self._strategy_cross_down_yestoday_low():
             return True
 
         return False
 
-    def _strategy_1(self):
+    def _strategy_stop_loss(self):
         """
         低于止损价直接卖出
         :return:
         """
         if self._current_price/self._buy_price<self._stop_loss:
             return True
-    def _strategy_2(self):
+    def _strategy_cross_down_yestoday_low(self):
         """突破昨日最低价直接卖出"""
         if self._current_price<self._yestoday_low:
             return True
 
     def _strategy_3(self,tick_data):
-        high_=float(tick_data['high'])
-        if self._high<high_:
-            self._high=high_
+
         pre_close=float(tick_data['pre_close'])
         income_point= self._high/pre_close-1
         if income_point>0.03:
@@ -276,6 +297,14 @@ class monkey_seller(object):
                 return True
 
         return False
+
+    def _strategy_limit_up(self):
+        if self._is_limit_up:
+            pass
+
+    def _strategy_7_to_10(self):
+        """"""
+
 
 
 def fit_levels(levels=[20000, 100000, 300000, 1000000]):
@@ -464,11 +493,17 @@ def test_calculate_price_rate(stock_code='000001',trade_days=5,end_date=None):
     expect_price,rate=calculate_price_rate(stock_code,start_date,end_date,trade_days,amount_threshold=100000,price=price)
     print(expect_price,rate)
 
+def test_trader_log():
+    import logging
+    log=logging.getLogger('trader')
+    log.info('buy 100 vol at price 4.5')
+
 if __name__ == '__main__':
     start_date = date.today() - timedelta(days=0)
-    money_flow = get_history_money_flow('002925', start_date=start_date, end_date=date.today()+timedelta(days=1))
+    # money_flow = get_history_money_flow('002925', start_date=start_date, end_date=date.today()+timedelta(days=1))
     # money_flow = get_today_money_flow('603706')
-    draw_money_flow_by_bar(money_flow)
+    # draw_money_flow_by_bar(money_flow)
     #print(money_flow.volume)
     # end_date=date(2018,8,20)
     # test_calculate_price_rate('603706',trade_days=1,end_date=end_date)
+    test_trader_log()

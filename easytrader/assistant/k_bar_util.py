@@ -46,5 +46,5 @@ def test1():
     for _,tick in tick_data.iterrows():
         k_bar.add_tick(tick)
     print(k_bar)
-if __name__=='__main__':
-    test1()
+# if __name__=='__main__':
+#     test1()
