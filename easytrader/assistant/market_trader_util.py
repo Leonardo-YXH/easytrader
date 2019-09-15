@@ -24,6 +24,8 @@ def get_previous_trader_date_by_code(date,code):
     :return: datetime
     """
     pro=ts.pro_api('3191ba2281dd651a0a3e3da586d78903bd05a2881e283058e4e8194e')
+    #下面是官方的api_token
+    #fa381e2536d016fd126110367ac47cf9da5fa515a784a19cf38f5c41
     date,start_str=get_previous_trader_date(date)
     date_str=date.strftime('%Y%m%d')
 
@@ -33,13 +35,25 @@ def get_previous_trader_date_by_code(date,code):
     return date
 
 
-def calculate_limit_up(self,price):
+def calculate_limit_up(price):
     """
-    10%的增长，小数点后两位四舍五入（排除st 5%的设定）
+    10%的增长，小数点第三位四舍五入（排除st 5%的设定）
     :param price:
     :return:
     """
     price*=1.1
+    price*=100
+    price+=0.5
+    price=math.floor(price)
+    return price/100.0
+
+def calculate_limit_down(price):
+    """
+    10%的跌幅，小数点第三位四舍五入（排除st 5%的设定）
+    :param price:
+    :return:
+    """
+    price*=0.9
     price*=100
     price+=0.5
     price=math.floor(price)
