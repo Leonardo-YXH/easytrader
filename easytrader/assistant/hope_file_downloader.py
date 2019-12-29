@@ -5,6 +5,7 @@ import time
 from datetime import date
 from ftplib import FTP
 import pandas as pd
+from sqlalchemy import create_engine
 
 # 服务器地址
 FTP_SERVER = '106.14.153.239'
@@ -67,6 +68,15 @@ def synchronize_result_file():
 
     :return:
     """
+    update_zixuan('Y_ZIXUAN.blk', 1000)
+    update_top_up('Y_UP.blk', 1000)
+
+
+def synchronize_result_file_():
+    """
+
+    :return:
+    """
     today = date.today()
 
     if today.isoweekday() > 5:  # 周六周日不执行
@@ -82,6 +92,34 @@ def synchronize_result_file():
 
     hope_file = 'hope_stock_' + date_str + '_limitup.csv'
     update_result_file(hope_file, local_root, ftp, 'Y_UP.blk')
+
+
+def update_zixuan(tdx_group, size):
+    """
+
+    :param tdx_group:
+    :param size:
+    :return:
+    """
+    conn = create_engine('mysql+pymysql://root:yangxh@106.14.153.239:3306/quant_bee?charset=utf8')
+    sql = 'select * from hushen_hope_daily'
+    data = pd.read_sql(sql, conn, index_col='id')
+    update_tdx_group(data, tdx_group, size)
+    print('update zi xuan successfully')
+
+
+def update_top_up(tdx_group, size):
+    """
+
+    :param tdx_group:
+    :param size:
+    :return:
+    """
+    conn = create_engine('mysql+pymysql://root:yangxh@106.14.153.239:3306/quant_bee?charset=utf8')
+    sql = 'select * from hushen_hope_daily_top_up'
+    data = pd.read_sql(sql, conn, index_col='id')
+    update_tdx_group(data, tdx_group, size)
+    print('update top up successfully')
 
 
 def update_result_file(filename, local_path, ftp, tdx_group):
