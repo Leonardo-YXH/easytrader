@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
-from .api import use, follower
-from . import exceptions
+import urllib3
 
-__version__ = "0.17.0"
+from easytrader import exceptions
+from easytrader.api import use, follower
+from easytrader.log import logger
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+__version__ = "0.20.1"
 __author__ = "shidenggui"
