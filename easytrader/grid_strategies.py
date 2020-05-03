@@ -76,7 +76,8 @@ class Copy(BaseStrategy):
     def get(self, control_id: int) -> List[Dict]:
         grid = self._get_grid(control_id)
         self._set_foreground(grid)
-        grid.type_keys("^A^C", set_foreground=False)
+        grid.post_message(win32defines.WM_COMMAND, 0xE122, 0)
+        # grid.type_keys("^A^C", set_foreground=False)
         content = self._get_clipboard_data()
         return self._format_grid_data(content)
 
