@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import sys
+sys.path.append('.')
 from easytrader import api
 from leo.database import order_record_service_impl
 from apscheduler.schedulers.background import BackgroundScheduler, BlockingScheduler
@@ -95,8 +97,7 @@ def get_ttype(ticker):
         return u'1-对手方最优价格申报'
 
 
-if __name__ == '__main__':
-    run()
+
 
 def test():
     # join_quant_follower()
@@ -160,3 +161,6 @@ def test():
             break
         print(help_msg)
         msg = input("please input your choice:")
+
+if __name__ == '__main__':
+    test()
