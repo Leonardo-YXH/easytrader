@@ -422,14 +422,14 @@ class ClientTrader(IClientTrader):
         control.type_keys(text, set_foreground=False)
 
     def _type_edit_control_keys(self, control_id, text):
-        if not self._editor_need_type_keys:
-            self._main.child_window(
-                control_id=control_id, class_name="Edit"
-            ).set_edit_text(text)
-        else:
-            editor = self._main.child_window(control_id=control_id, class_name="Edit")
-            editor.select()
-            editor.type_keys(text)
+        # if not self._editor_need_type_keys:
+        #     self._main.child_window(
+        #         control_id=control_id, class_name="Edit"
+        #     ).set_edit_text(text)
+        # else:
+        editor = self._main.child_window(control_id=control_id, class_name="Edit")
+        editor.select()
+        editor.type_keys(text)
 
     def _collapse_left_menus(self):
         items = self._get_left_menus_handle().roots()
