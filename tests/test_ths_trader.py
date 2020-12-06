@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
-sys.path.append('c:/workspace/easytrader')
+sys.path.append('.')
 from easytrader import api
 from leo.database import order_record_service_impl
 from apscheduler.schedulers.background import BackgroundScheduler, BlockingScheduler
@@ -22,14 +22,14 @@ def run():
     engine = create_engine('mysql+pymysql://root:yangxh@106.14.153.239:3306/join_quant_backtesting?charset=utf8')
     session = sessionmaker(bind=engine)()
     client = api.use('ths', debug=False)
-    client.connect(r"D:\\software\\同花顺独立下单final\\xiadan.exe", timeout=5)
+    client.connect(r"c:\\workspace\\同花顺独立下单final\\\\xiadan.exe", timeout=5)
     client.enable_type_keys_for_editor()
     # add job for computing trendency of all stock
-    # scheduler.add_job(join_quant_follower_sell, 'cron', day_of_week='mon-fri', hour=9, minute=28,
-    #                   args=[client, session])
-    # scheduler.add_job(join_quant_follower_buy, 'cron', day_of_week='mon-fri', hour=9, minute=31, args=[client, session])
+    scheduler.add_job(join_quant_follower_sell, 'cron', day_of_week='mon-fri', hour=9, minute=27,
+                      args=[client, session])
+    scheduler.add_job(join_quant_follower_buy, 'cron', day_of_week='mon-fri', hour=9, minute=31, args=[client, session])
     # join_quant_follower_sell(client,session)
-    join_quant_follower_buy(client,session)
+    # join_quant_follower_buy(client,session)
     try:
         scheduler.start()
     except(KeyboardInterrupt, SystemExit):
@@ -49,6 +49,9 @@ def join_quant_follower_sell(client, session):
             security = order.ticker[:6]
             if security in pos_dict:
                 client.market_sell(security, pos_dict[security]['可用余额'], ttype=get_ttype(security))
+                order.status = 1
+
+    session.commit()
 
 
 def join_quant_follower_buy(client, session):
@@ -67,7 +70,7 @@ def join_quant_follower_buy(client, session):
         if order.order_side == 1:
             long_orders.append(order)
 
-    min_volume = 5000
+    min_volume = 10000
     max_volume = 100000
     per_amount = available_volume / len(long_orders)
     if per_amount > max_volume:
@@ -79,13 +82,13 @@ def join_quant_follower_buy(client, session):
 
     for order in long_orders:
         security = order.ticker[:6]
-        real_quote=ts.get_realtime_quotes(security)
+        real_quote = ts.get_realtime_quotes(security)
         if not real_quote.empty:
             amount = per_amount // float(real_quote['price'][0])
             amount = amount - amount % 100
-            print('ticker:{} amount:{}'.format(security,amount))
-            client.market_buy(security, 100, ttype=get_ttype(security))
-            order.status=1
+            print('ticker:{} amount:{}'.format(security, amount))
+            client.market_buy(security, amount, ttype=get_ttype(security))
+            order.status = 1
 
     session.commit()
 
@@ -95,8 +98,6 @@ def get_ttype(ticker):
         return u'1-最优五档即时成交剩余撤销申报'
     else:
         return u'1-对手方最优价格申报'
-
-
 
 
 def test():
@@ -162,5 +163,6 @@ def test():
         print(help_msg)
         msg = input("please input your choice:")
 
+
 if __name__ == '__main__':
-    test()
+    run()
