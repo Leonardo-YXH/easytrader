@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import sys
-
 sys.path.append('.')
 from easytrader import api
 from leo.database import order_record_service_impl
