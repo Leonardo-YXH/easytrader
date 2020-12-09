@@ -70,28 +70,28 @@ def join_quant_follower_buy(client, session):
     for order in trade_orders:
         if order.order_side == 1:
             long_orders.append(order)
+    if len(long_orders) > 0:
+        min_volume = 10000
+        max_volume = 100000
+        per_amount = available_volume / len(long_orders)
+        if per_amount > max_volume:
+            per_amount = max_volume
+        elif per_amount < min_volume:
+            per_amount = min_volume
+            long_orders_length = available_volume // per_amount
+            long_orders = long_orders[:long_orders_length]
 
-    min_volume = 10000
-    max_volume = 100000
-    per_amount = available_volume / len(long_orders)
-    if per_amount > max_volume:
-        per_amount = max_volume
-    elif per_amount < min_volume:
-        per_amount = min_volume
-        long_orders_length = available_volume // per_amount
-        long_orders = long_orders[:long_orders_length]
+        for order in long_orders:
+            security = order.ticker[:6]
+            real_quote = ts.get_realtime_quotes(security)
+            if not real_quote.empty:
+                amount = per_amount // float(real_quote['price'][0])
+                amount = amount - amount % 100
+                print('ticker:{} amount:{}'.format(security, amount))
+                client.market_buy(security, amount, ttype=get_ttype(security))
+                order.status = 1
 
-    for order in long_orders:
-        security = order.ticker[:6]
-        real_quote = ts.get_realtime_quotes(security)
-        if not real_quote.empty:
-            amount = per_amount // float(real_quote['price'][0])
-            amount = amount - amount % 100
-            print('ticker:{} amount:{}'.format(security, amount))
-            client.market_buy(security, amount, ttype=get_ttype(security))
-            order.status = 1
-
-    session.commit()
+        session.commit()
 
 
 def get_ttype(ticker):
