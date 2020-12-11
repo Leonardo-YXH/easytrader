@@ -77,7 +77,7 @@ def join_quant_follower_buy(client, session):
             per_amount = max_volume
         elif per_amount < min_volume:
             per_amount = min_volume
-            long_orders_length = available_volume // per_amount
+            long_orders_length = int(available_volume // per_amount)
             long_orders = long_orders[:long_orders_length]
 
         for order in long_orders:
