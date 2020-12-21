@@ -19,15 +19,14 @@ def run():
     scheduler = BlockingScheduler()
     scheduler.configure(executors=executors)
 
-    engine = create_engine('mysql+pymysql://root:yangxh@106.14.153.239:3306/join_quant_backtesting?charset=utf8')
-    session = sessionmaker(bind=engine)()
+
     client = api.use('ths', debug=False)
     client.connect(r"c:\\workspace\\同花顺独立下单final\\\\xiadan.exe", timeout=5)
     client.enable_type_keys_for_editor()
     # add job for computing trendency of all stock
     scheduler.add_job(join_quant_follower_sell, 'cron', day_of_week='mon-fri', hour=9, minute=27,
-                      args=[client, session])
-    scheduler.add_job(join_quant_follower_buy, 'cron', day_of_week='mon-fri', hour=9, minute=31, args=[client, session])
+                      args=[client])
+    scheduler.add_job(join_quant_follower_buy, 'cron', day_of_week='mon-fri', hour=9, minute=31, args=[client])
     # join_quant_follower_sell(client,session)
     # join_quant_follower_buy(client,session)
     try:
@@ -36,7 +35,9 @@ def run():
         scheduler.remove_all_jobs()
 
 
-def join_quant_follower_sell(client, session):
+def join_quant_follower_sell(client):
+    engine = create_engine('mysql+pymysql://root:yangxh@106.14.153.239:3306/join_quant_backtesting?charset=utf8')
+    session = sessionmaker(bind=engine)()
     trade_orders = order_record_service_impl.select(session, strategy_id=110,
                                                     start_time=datetime.now().strftime('%Y-%m-%d'))
     pos = client.position
@@ -54,7 +55,9 @@ def join_quant_follower_sell(client, session):
     session.commit()
 
 
-def join_quant_follower_buy(client, session):
+def join_quant_follower_buy(client):
+    engine = create_engine('mysql+pymysql://root:yangxh@106.14.153.239:3306/join_quant_backtesting?charset=utf8')
+    session = sessionmaker(bind=engine)()
     trade_orders = order_record_service_impl.select(session, strategy_id=110,
                                                     start_time=datetime.now().strftime('%Y-%m-%d'))
 
@@ -70,7 +73,7 @@ def join_quant_follower_buy(client, session):
         if order.order_side == 1:
             long_orders.append(order)
     if len(long_orders) > 0:
-        min_volume = 10000
+        min_volume = 20000
         max_volume = 100000
         per_amount = available_volume / len(long_orders)
         if per_amount > max_volume:
@@ -95,7 +98,7 @@ def join_quant_follower_buy(client, session):
 
 def get_ttype(ticker):
     if ticker.startswith('60'):
-        return u'1-最优五档即时成交剩余撤销申报'
+        return u'1-最优五档即时成交剩余转限价申报'
     else:
         return u'1-对手方最优价格申报'
 

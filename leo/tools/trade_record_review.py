@@ -106,7 +106,7 @@ def record_analysis(root_path, engine, backtesting_id):
 if __name__ == '__main__':
     engine = mysql_proxy.get_connection('join_quant_backtesting')
     mysql_proxy.enable_np_encoder(engine)
-    backtesting_id = '110_2020-12-10_23-26'
+    backtesting_id = '110_2020-12-16_21-46'
     root_path = 'f:/joinquant/backtesting/trade_record'
     record_2_map(root_path, engine, backtesting_id)
 
