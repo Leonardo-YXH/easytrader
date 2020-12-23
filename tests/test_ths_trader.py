@@ -21,7 +21,7 @@ def run():
 
 
     client = api.use('ths', debug=False)
-    client.connect(r"c:\\workspace\\同花顺独立下单final\\\\xiadan.exe", timeout=5)
+    client.connect(r"c:\\workspace\\同花顺\\\\xiadan.exe", timeout=5)
     client.enable_type_keys_for_editor()
     # add job for computing trendency of all stock
     scheduler.add_job(join_quant_follower_sell, 'cron', day_of_week='mon-fri', hour=9, minute=27,
@@ -98,7 +98,7 @@ def join_quant_follower_buy(client):
 
 def get_ttype(ticker):
     if ticker.startswith('60'):
-        return u'1-最优五档即时成交剩余转限价申报'
+        return u'2-最优五档即时成交剩余转限价申报'
     else:
         return u'1-对手方最优价格申报'
 
