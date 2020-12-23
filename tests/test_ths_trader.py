@@ -105,10 +105,10 @@ def get_ttype(ticker):
 
 def test():
     # join_quant_follower()
-    client = api.use('ths', debug=True)
+    client = api.use('ths', debug=False)
     # client.connect(r"D:\\同花顺软件\\同花顺\\xiadan.exe", timeout=5)
     # client.connect(r"D:\\software\\同花顺独立下单\\xiadan.exe",timeout=5)
-    client.connect(r"c:\\workspace\\同花顺独立下单final\\xiadan.exe", timeout=5)
+    client.connect(r"c:\\workspace\\同花顺\\xiadan.exe", timeout=5)
 
     client.enable_type_keys_for_editor()
     help_msg = """1--buyF1
